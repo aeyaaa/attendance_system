@@ -1,0 +1,132 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    width: 700px;
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.left-side {
+    width: 40%;
+    background-color: #ffd54f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 20px;
+}
+.logo-container {
+    text-align: center;
+}
+
+.logo {
+    width: 200px;
+    margin-bottom: 10px;
+}
+
+.left-side p {
+    color: #fff;
+    font-size: 1.2em;
+}
+
+.right-side {
+    width: 60%;
+    padding: 40px 30px;
+}
+
+.login-container h1 {
+    color: #555;
+    margin-bottom: 10px;
+    font-size: 1.8em;
+    text-align: center;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.input-group i.material-icons {
+    position: absolute;
+    left: 10px; /* Position icon on the left side */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #777;
+    font-size: 20px;
+}
+
+.input-group input[type="text"],
+.input-group input[type="password"] {
+    width: 100%;
+    padding: 10px 10px 10px 40px; /* Padding to make space for the icon */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    outline: none;
+    font-size: 1em;
+}
+
+.remember-me {
+    display: flex;
+    justify-content: start;
+    margin-bottom: 30px;
+    margin-left: 5px;
+    align-items: center;
+    color: #555;
+}
+.remember-me label{
+    font-size: .75em;
+    margin-left: 5px;
+    color: #555;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: blue !important;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #ffca28;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+}
+
+p {
+    color: #777;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+p a {
+    color: #ffd54f;
+    text-decoration: none;
+}
+
+p a:hover {
+    text-decoration: underline;
+}
