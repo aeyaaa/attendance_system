@@ -3,9 +3,9 @@ session_start();
 require '../db.php'; // Include the database connection file
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = $_POST['name'];
     $username = $_POST['username'];
     $password = $_POST['password'];
-    $name = $_POST['name']; // Added name field
 
     // Check if the username already exists in the database
     $sql = "SELECT * FROM users WHERE username = :username LIMIT 1";
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT); 
 
         // Prepare the SQL insert query to include plain_password
-        $sql = "INSERT INTO users (username, password, plain_password, role, name) VALUES (:username, :password, :plain_password, 'teacher', :name)";
+        $sql = "INSERT INTO users (name, username, password, plain_password, role) VALUES (:name, :username, :password, :plain_password, 'teacher')";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':username', $username);
@@ -32,17 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             if ($stmt->execute()) {
-                // Redirect with a success message
                 $_SESSION['success_message'] = "Teacher account added successfully!";
-                header("Location: /attendance_system/admin_dashboard.php");
+                header("Location: /attendance_system/admin_dashboard.php"); // Redirect to admin dashboard
                 exit();
             } else {
                 echo "Error: Could not add the teacher account.";
             }
         } catch (Exception $e) {
-            // Display error message if something goes wrong with the SQL
             echo "Error: " . $e->getMessage();
         }
     }
 }
-?>

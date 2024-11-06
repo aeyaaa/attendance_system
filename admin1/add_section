@@ -3,11 +3,10 @@ session_start();
 require '../db.php'; // Include the database connection file
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get section details
     $section_name = $_POST['section_name'];
     $total_students = $_POST['total_students'];
 
-    // Insert the section into the database
+    // Prepare and execute the SQL insert query for the section
     $sql = "INSERT INTO sections (section_name, total_students) VALUES (:section_name, :total_students)";
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':section_name', $section_name);
@@ -15,37 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         if ($stmt->execute()) {
-            $section_id = $pdo->lastInsertId(); // Get the ID of the newly inserted section
-
-            // Insert each student
-            for ($i = 1; $i <= $total_students; $i++) {
-                // Check if student data exists for each student input
-                if (isset($_POST['student_' . $i])) {
-                    $student_name = $_POST['student_' . $i];
-                    
-                    // Insert student into the students table
-                    $sql = "INSERT INTO students (section_id, name) VALUES (:section_id, :name)";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->bindParam(':section_id', $section_id);
-                    $stmt->bindParam(':name', $student_name);
-                    $stmt->execute();
-                }
-            }
-
-            // Success message
-            $_SESSION['success_message'] = "Section and students added successfully!";
-            header("Location: /attendance_system/admin_dashboard.php"); // Redirect to the admin dashboard
+            $_SESSION['success_message'] = "Section added successfully!";
+            header("Location: /attendance_system/admin_dashboard.php"); // Redirect to admin dashboard
             exit();
         } else {
             echo "Error: Could not add the section.";
         }
     } catch (Exception $e) {
-        // Display error message if something goes wrong with the SQL
         echo "Error: " . $e->getMessage();
     }
-} else {
-    // Handle case if not a POST request
-    header("Location: /attendance_system/admin_dashboard.php");
-    exit();
 }
 ?>
