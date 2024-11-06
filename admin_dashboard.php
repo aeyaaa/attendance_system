@@ -13,6 +13,12 @@ $sql = "SELECT id, username, role, name, plain_password FROM users"; // Adjust t
 $stmt = $pdo->prepare($sql);
 $stmt->execute();
 $users = $stmt->fetchAll();
+
+// Query to get all sections
+$sql_sections = "SELECT id, section_name, total_students FROM sections"; 
+$stmt_sections = $pdo->prepare($sql_sections);
+$stmt_sections->execute();
+$sections = $stmt_sections->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -88,6 +94,33 @@ $users = $stmt->fetchAll();
                 </tbody>
             </table>
         </div>
+
+        <!-- Table to Display Sections -->
+        <div class="table-container">
+            <h2>Sections List</h2>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Section Name</th>
+                        <th>Total Students</th>
+                        <th>Student List</th> <!-- Added column for Student List -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($sections as $section): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($section['id']); ?></td>
+                            <td><?php echo htmlspecialchars($section['section_name']); ?></td>
+                            <td><?php echo htmlspecialchars($section['total_students']); ?></td>
+                            <td>
+                                <button class="view-students" data-section-id="<?php echo $section['id']; ?>">View Students</button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Add Teacher Modal -->
@@ -129,6 +162,15 @@ $users = $stmt->fetchAll();
         </div>
     </div>
 
+    <!-- Student List Modal -->
+    <div id="studentListModal" class="modal">
+        <div class="modal-content">
+            <h4>Student List</h4>
+            <div id="studentListContainer"></div>
+            <button type="button" class="close-modal">Close</button>
+        </div>
+    </div>
+
     <script>
         // Open the "Add Teacher" modal
         document.getElementById('addTeacherBtn').addEventListener('click', function() {
@@ -149,22 +191,32 @@ $users = $stmt->fetchAll();
             });
         });
 
-        // Dynamically add student input fields based on the number of students
-        document.getElementById('total_students').addEventListener('input', function() {
-            let totalStudents = this.value;
-            let studentInputsDiv = document.getElementById('student_inputs');
-            studentInputsDiv.innerHTML = ''; // Clear previous student input fields
+        // Fetch and display student list for a specific section
+        document.querySelectorAll('.view-students').forEach(function(button) {
+            button.addEventListener('click', function() {
+                let sectionId = this.getAttribute('data-section-id');
+                fetch(`get_students.php?section_id=${sectionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let studentListContainer = document.getElementById('studentListContainer');
+                        studentListContainer.innerHTML = '';
 
-            for (let i = 1; i <= totalStudents; i++) {
-                let studentField = document.createElement('div');
-                studentField.innerHTML = `
-                    <label for="student_${i}">Student ${i} Name:</label>
-                    <input type="text" id="student_${i}" name="student_${i}" required><br><br>
-                `;
-                studentInputsDiv.appendChild(studentField);
-            }
+                        if (data.length > 0) {
+                            let ul = document.createElement('ul');
+                            data.forEach(student => {
+                                let li = document.createElement('li');
+                                li.textContent = student.name;
+                                ul.appendChild(li);
+                            });
+                            studentListContainer.appendChild(ul);
+                        } else {
+                            studentListContainer.innerHTML = 'No students found for this section.';
+                        }
+
+                        document.getElementById('studentListModal').style.display = 'block';
+                    });
+            });
         });
     </script>
-
 </body>
 </html>
