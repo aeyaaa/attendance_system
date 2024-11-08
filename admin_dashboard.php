@@ -66,7 +66,6 @@ $sections = $stmt_sections->fetchAll();
                 <!-- Buttons to trigger modals -->
                 <button class="select-section" id="addTeacherBtn">ADD TEACHER</button>
                 <button class="select-section" id="addSectionBtn">ADD SECTION</button>
-                <button class="select-section">ADD STUDENT</button>
             </div>
         </div>
 
@@ -95,33 +94,42 @@ $sections = $stmt_sections->fetchAll();
             </table>
         </div>
 
-        <!-- Table to Display Sections -->
-        <div class="table-container">
-            <h2>Sections List</h2>
-            <table border="1">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Section Name</th>
-                        <th>Total Students</th>
-                        <th>Student List</th> <!-- Added column for Student List -->
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($sections as $section): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($section['id']); ?></td>
-                            <td><?php echo htmlspecialchars($section['section_name']); ?></td>
-                            <td><?php echo htmlspecialchars($section['total_students']); ?></td>
-                            <td>
-                                <button class="view-students" data-section-id="<?php echo $section['id']; ?>">View Students</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+ <!-- Table to Display Sections -->
+<div class="table-container">
+    <h2>Sections List</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Section Name</th>
+                <th>Total Students</th>
+                <th>Student List</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($sections as $section): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($section['id']); ?></td>
+                    <td><?php echo htmlspecialchars($section['section_name']); ?></td>
+                    <td><?php echo htmlspecialchars($section['total_students']); ?></td>
+                    <td>
+                        <button class="view-students" data-section-id="<?php echo $section['id']; ?>">View Students</button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<!-- Student List Modal -->
+<div id="studentListModal" class="modal">
+    <div class="modal-content">
+        <h4>Student List</h4>
+        <div id="studentListContainer"></div>
+        <button type="button" class="close-modal">Close</button>
     </div>
+</div>
+
 
     <!-- Add Teacher Modal -->
     <div id="addTeacherModal" class="modal">
@@ -190,6 +198,54 @@ $sections = $stmt_sections->fetchAll();
             this.closest('.modal').style.display = 'none';
         });
     });
+    // Handle "View Students" button clicks
+// Open the "View Students" modal and fetch student data
+document.querySelectorAll('.view-students').forEach(function(button) {
+    button.addEventListener('click', function() {
+        const sectionId = this.getAttribute('data-section-id');
+
+        fetch(`./admin1/fetch_students.php?section_id=${sectionId}`)
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Add this line to check the response
+        const studentListContainer = document.getElementById('studentListContainer');
+        studentListContainer.innerHTML = ''; // Clear previous data
+
+        // Check if there are students
+        if (data.length > 0) {
+            // Populate student list
+            data.forEach(student => {
+                const studentItem = document.createElement('p');
+                studentItem.textContent = student.name; // Replace 'name' with the actual field name in your database
+                studentListContainer.appendChild(studentItem);
+            });
+        } else {
+            studentListContainer.innerHTML = '<p>No students found in this section.</p>';
+        }
+
+        // Display the modal
+        document.getElementById('studentListModal').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error fetching students:', error);
+    });
+
+    });
+});
+
+// Close the student list modal
+document.querySelector('#studentListModal .close-modal').addEventListener('click', function() {
+    document.getElementById('studentListModal').style.display = 'none';
+});
+//
+
+// Close the modal when clicking "Close"
+document.querySelectorAll('.close-modal').forEach(function(button) {
+    button.addEventListener('click', function() {
+        this.closest('.modal').style.display = 'none';
+    });
+});
+
 
     // Generate student name input fields dynamically based on the "Total Students" input
     document.getElementById('total_students').addEventListener('input', function() {
