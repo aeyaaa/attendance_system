@@ -24,7 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Execute the query
     if ($stmt->execute()) {
-        echo "Class added successfully!";
+        // Redirect back to teacher_dashboard.php with a success message
+        header("Location: /attendance_system/teacher_dashboard.php?success=Class added successfully!");
+        exit();
     } else {
         echo "Error adding class!";
     }
