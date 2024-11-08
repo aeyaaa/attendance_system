@@ -3,7 +3,9 @@ session_start();
 require './db.php'; // Include the database connection file
 
 // Fetch attendance records from the 'attendance' table
-$sql = "SELECT student_name, time_in, time_out, remarks FROM attendance";
+$sql = "SELECT students.name, attendance.date, attendance.time_in, attendance.time_out, attendance.remarks 
+        FROM attendance 
+        JOIN students ON attendance.student_id = students.id";
 $stmt = $pdo->query($sql);
 
 // Store records in an array
