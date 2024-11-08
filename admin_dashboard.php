@@ -172,51 +172,50 @@ $sections = $stmt_sections->fetchAll();
     </div>
 
     <script>
-        // Open the "Add Teacher" modal
-        document.getElementById('addTeacherBtn').addEventListener('click', function() {
-            document.getElementById('addTeacherModal').style.display = 'block';
-            document.getElementById('addSectionModal').style.display = 'none'; // Hide "Add Section" modal if open
+    // Open the "Add Teacher" modal
+    document.getElementById('addTeacherBtn').addEventListener('click', function() {
+        document.getElementById('addTeacherModal').style.display = 'block';
+        document.getElementById('addSectionModal').style.display = 'none'; // Hide "Add Section" modal if open
+    });
+
+    // Open the "Add Section" modal
+    document.getElementById('addSectionBtn').addEventListener('click', function() {
+        document.getElementById('addSectionModal').style.display = 'block';
+        document.getElementById('addTeacherModal').style.display = 'none'; // Hide "Add Teacher" modal if open
+    });
+
+    // Close the modals
+    document.querySelectorAll('.close-modal').forEach(function(button) {
+        button.addEventListener('click', function() {
+            this.closest('.modal').style.display = 'none';
         });
+    });
 
-        // Open the "Add Section" modal
-        document.getElementById('addSectionBtn').addEventListener('click', function() {
-            document.getElementById('addSectionModal').style.display = 'block';
-            document.getElementById('addTeacherModal').style.display = 'none'; // Hide "Add Teacher" modal if open
-        });
+    // Generate student name input fields dynamically based on the "Total Students" input
+    document.getElementById('total_students').addEventListener('input', function() {
+        const totalStudents = parseInt(this.value) || 0;
+        const studentInputsDiv = document.getElementById('student_inputs');
+        studentInputsDiv.innerHTML = ''; // Clear any existing inputs
 
-        // Close the modals
-        document.querySelectorAll('.close-modal').forEach(function(button) {
-            button.addEventListener('click', function() {
-                this.closest('.modal').style.display = 'none';
-            });
-        });
+        for (let i = 1; i <= totalStudents; i++) {
+            // Create a label for each student input
+            const label = document.createElement('label');
+            label.textContent = `Student ${i} Name:`;
 
-        // Fetch and display student list for a specific section
-        document.querySelectorAll('.view-students').forEach(function(button) {
-            button.addEventListener('click', function() {
-                let sectionId = this.getAttribute('data-section-id');
-                fetch(`get_students.php?section_id=${sectionId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        let studentListContainer = document.getElementById('studentListContainer');
-                        studentListContainer.innerHTML = '';
+            // Create an input field for each student name
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.name = `student_names[]`; // Use an array format to capture all student names
+            input.placeholder = `Enter Student ${i} Name`;
+            input.required = true;
 
-                        if (data.length > 0) {
-                            let ul = document.createElement('ul');
-                            data.forEach(student => {
-                                let li = document.createElement('li');
-                                li.textContent = student.name;
-                                ul.appendChild(li);
-                            });
-                            studentListContainer.appendChild(ul);
-                        } else {
-                            studentListContainer.innerHTML = 'No students found for this section.';
-                        }
+            // Append the label and input field to the student inputs div
+            studentInputsDiv.appendChild(label);
+            studentInputsDiv.appendChild(input);
+            studentInputsDiv.appendChild(document.createElement('br'));
+        }
+    });
+</script>
 
-                        document.getElementById('studentListModal').style.display = 'block';
-                    });
-            });
-        });
-    </script>
 </body>
 </html>
