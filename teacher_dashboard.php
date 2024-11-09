@@ -107,16 +107,30 @@ $classes = $classStmt->fetchAll();
             <div class="welcome">
                 <h1>WELCOME MR. CRUZ</h1>
                 <button class="select-section" onclick="openModal()">ADD CLASS</button>
+                
+                <!-- Class Selection Dropdown -->
+                <div class="class-selection">
+                    <label for="select_class">Select Class:</label>
+                    <select id="select_class">
+                        <option value="">Select a class...</option>
+                        <?php foreach ($classes as $class): ?>
+                            <option value="<?php echo $class['id']; ?>"><?php echo htmlspecialchars($class['section_name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <!-- End of Class Selection Dropdown -->
             </div>
-            <!-- class info -->
+
+            <!-- Class Info Section -->
             <div class="class-info">
-                <p>Course: REEDCS101</p>
-                <p>Section: C01</p>
-                <p>Period Covered: Nov. 1-7, 2024</p>
-                <p>Class Schedule: MWF | Time: 7:30AM - 8:30AM | Room No.: LC01</p>
+                <p>Section: <span id="class-section">N/A</span></p>
+                <p>Period Covered: <span id="class-period-covered">N/A</span></p>
+                <p>Class Schedule: <span id="class-schedule">N/A</span> | Time: <span id="class-time">N/A</span> | Room No.: <span id="class-room-number">N/A</span></p>
             </div>
-            <!-- class info -->
+            
         </div>
+        
+        <!-- STUDENT attendance -->
         <div class="table-container">
             <input type="text" placeholder="Search..." class="search-bar">
             <table>
@@ -138,72 +152,94 @@ $classes = $classStmt->fetchAll();
             <button class="print-button">PRINT</button>
         </div>
 
-        <!-- Class Selection Dropdown -->
-        <div class="class-selection">
-            <label for="select_class">Select Class:</label>
-            <select id="select_class">
-                <option value="">Select a class...</option>
-                <?php foreach ($classes as $class): ?>
-                    <option value="<?php echo $class['id']; ?>"><?php echo htmlspecialchars($class['section_name']); ?></option>
-                <?php endforeach; ?>
-            </select>
+        <!-- Modal for Adding Class -->
+        <div id="addClassModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Add Class</h2>
+                <form action="./teacher/add_class.php" method="post">
+                    <label for="section">Section:</label>
+                    <select name="section_id" id="section" required>
+                        <?php foreach ($sections as $section): ?>
+                            <option value="<?php echo $section['id']; ?>"><?php echo htmlspecialchars($section['section_name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <label for="period_start">Period Start:</label>
+                    <input type="date" name="period_start" required>
+
+                    <label for="period_end">Period End:</label>
+                    <input type="date" name="period_end" required>
+
+                    <label for="schedule">Class Schedule:</label>
+                    <select name="schedule" required>
+                        <option value="M">Monday</option>
+                        <option value="T">Tuesday</option>
+                        <option value="W">Wednesday</option>
+                        <option value="TH">Thursday</option>
+                        <option value="F">Friday</option>
+                        <option value="S">Saturday</option>
+                    </select>
+
+                    <label for="room_number">Room No.:</label>
+                    <input type="text" name="room_number" required>
+
+                    <button type="submit">Add Class</button>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <!-- Modal for Adding Class -->
-    <div id="addClassModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Add Class</h2>
-            <form action="./teacher/add_class.php" method="post">
-                <label for="section">Section:</label>
-                <select name="section_id" id="section" required>
-                    <?php foreach ($sections as $section): ?>
-                        <option value="<?php echo $section['id']; ?>"><?php echo htmlspecialchars($section['section_name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-
-                <label for="period_start">Period Start:</label>
-                <input type="date" name="period_start" required>
-
-                <label for="period_end">Period End:</label>
-                <input type="date" name="period_end" required>
-
-                <label for="schedule">Class Schedule:</label>
-                <select name="schedule" required>
-                    <option value="M">Monday</option>
-                    <option value="T">Tuesday</option>
-                    <option value="W">Wednesday</option>
-                    <option value="TH">Thursday</option>
-                    <option value="F">Friday</option>
-                    <option value="S">Saturday</option>
-                </select>
-
-                <label for="room_number">Room No.:</label>
-                <input type="text" name="room_number" required>
-
-                <button type="submit">Add Class</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // Modal functionality
-        function openModal() {
-            document.getElementById("addClassModal").style.display = "block";
-        }
-
-        function closeModal() {
-            document.getElementById("addClassModal").style.display = "none";
-        }
-
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            var modal = document.getElementById("addClassModal");
-            if (event.target === modal) {
-                modal.style.display = "none";
+        <script>
+            // Modal functionality
+            function openModal() {
+                document.getElementById("addClassModal").style.display = "block";
             }
-        }
-    </script>
+
+            function closeModal() {
+                document.getElementById("addClassModal").style.display = "none";
+            }
+
+            window.onclick = function(event) {
+                const modal = document.getElementById("addClassModal");
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            // Fetch class info when a class is selected
+            document.getElementById("select_class").addEventListener("change", function() {
+                const classId = this.value;
+                
+                if (classId) {
+                    fetch(`./teacher/fetch_class_info.php?class_id=${classId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Class Info Response:", data);
+                            if (data.error) {
+                                console.error("Error:", data.error);
+                                alert("Unable to fetch class info. Please try again.");
+                                return;
+                            }
+                            document.getElementById("class-section").innerText = data.section_name || 'N/A';
+                            document.getElementById("class-period-covered").innerText = 
+                                `${data.period_start || 'N/A'} - ${data.period_end || 'N/A'}`;
+                            document.getElementById("class-schedule").innerText = data.schedule || 'N/A';
+                            document.getElementById("class-time").innerText = data.class_time || 'N/A';
+                            document.getElementById("class-room-number").innerText = data.room_number || 'N/A';
+                        })
+                        .catch(error => {
+                            console.error("Error fetching class info:", error);
+                            alert("There was an error fetching the class information.");
+                        });
+                } else {
+                    document.getElementById("class-section").innerText = 'N/A';
+                    document.getElementById("class-period-covered").innerText = 'N/A';
+                    document.getElementById("class-schedule").innerText = 'N/A';
+                    document.getElementById("class-time").innerText = 'N/A';
+                    document.getElementById("class-room-number").innerText = 'N/A';
+                }
+            });
+        </script>
+    </div>
 </body>
 </html>
