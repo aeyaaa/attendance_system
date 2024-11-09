@@ -8,6 +8,7 @@ $sql = "
     FROM attendance
     JOIN students ON attendance.student_id = students.id
 ";
+
 $stmt = $pdo->query($sql);
 $attendanceRecords = $stmt->fetchAll();
 
