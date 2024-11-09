@@ -13,6 +13,12 @@ $sql = "SELECT id, username, role, name, plain_password FROM users"; // Adjust t
 $stmt = $pdo->prepare($sql);
 $stmt->execute();
 $users = $stmt->fetchAll();
+
+// Query to get all sections
+$sql_sections = "SELECT id, section_name, total_students FROM sections"; 
+$stmt_sections = $pdo->prepare($sql_sections);
+$stmt_sections->execute();
+$sections = $stmt_sections->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -57,10 +63,9 @@ $users = $stmt->fetchAll();
         <div class="header">
             <div class="welcome">
                 <h1>ADMIN</h1>
-                <!-- Button to trigger modal -->
+                <!-- Buttons to trigger modals -->
                 <button class="select-section" id="addTeacherBtn">ADD TEACHER</button>
-                <button class="select-section">ADD SECTION</button>
-                <button class="select-section">ADD STUDENT</button>
+                <button class="select-section" id="addSectionBtn">ADD SECTION</button>
             </div>
         </div>
 
@@ -88,9 +93,36 @@ $users = $stmt->fetchAll();
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Modal Structure -->
+ <!-- Table to Display Sections -->
+<div class="table-container">
+    <h2>Sections List</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Section Name</th>
+                <th>Total Students</th>
+                <th>Student List</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($sections as $section): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($section['id']); ?></td>
+                    <td><?php echo htmlspecialchars($section['section_name']); ?></td>
+                    <td><?php echo htmlspecialchars($section['total_students']); ?></td>
+                    <td>
+                        <button class="view-students" data-section-id="<?php echo $section['id']; ?>">View Students</button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+
+    <!-- Add Teacher Modal -->
     <div id="addTeacherModal" class="modal">
         <div class="modal-content">
             <h4>Add Teacher Account</h4>
@@ -110,28 +142,128 @@ $users = $stmt->fetchAll();
         </div>
     </div>
 
+    <!-- Add Section Modal -->
+    <div id="addSectionModal" class="modal">
+        <div class="modal-content">
+            <h4>Add Section</h4>
+            <form action="./admin1/add_section.php" method="POST" id="addSectionForm">
+                <label for="course">Course:</label>
+                <input type="text" id="course" name="course" required><br><br>
+
+                <label for="section_name">Section Name:</label>
+                <input type="text" id="section_name" name="section_name" required><br><br>
+
+                <label for="total_students">Total Students:</label>
+                <input type="number" id="total_students" name="total_students" required><br><br>
+
+                <div id="student_inputs"></div>
+
+                <input type="submit" value="Add Section">
+                <button type="button" class="close-modal">Close</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student List Modal -->
+    <div id="studentListModal" class="modal">
+        <div class="modal-content">
+            <h4>Student List</h4>
+            <div id="studentListContainer"></div>
+            <button type="button" class="close-modal">Close</button>
+        </div>
+    </div>
+
     <script>
-    // Open the modal when the "Add Teacher" button is clicked
+    // Open the "Add Teacher" modal
     document.getElementById('addTeacherBtn').addEventListener('click', function() {
         document.getElementById('addTeacherModal').style.display = 'block';
+        document.getElementById('addSectionModal').style.display = 'none'; // Hide "Add Section" modal if open
     });
 
-    // Close the modal when the close button is clicked
-    document.querySelector('.close-modal').addEventListener('click', function() {
-        document.getElementById('addTeacherModal').style.display = 'none';
+    // Open the "Add Section" modal
+    document.getElementById('addSectionBtn').addEventListener('click', function() {
+        document.getElementById('addSectionModal').style.display = 'block';
+        document.getElementById('addTeacherModal').style.display = 'none'; // Hide "Add Teacher" modal if open
     });
 
-    // Check if there is a success message and display it in the success modal
-    <?php if (isset($_SESSION['success_message'])): ?>
-        document.getElementById('successMessageContent').textContent = "<?php echo $_SESSION['success_message']; ?>";
-        document.getElementById('successMessageModal').style.display = 'block';
-        // Clear success message after displaying it
-        <?php unset($_SESSION['success_message']); ?>
-    <?php endif; ?>
+    // Close the modals
+    document.querySelectorAll('.close-modal').forEach(function(button) {
+        button.addEventListener('click', function() {
+            this.closest('.modal').style.display = 'none';
+        });
+    });
+    // Handle "View Students" button clicks
+// Open the "View Students" modal and fetch student data
+document.querySelectorAll('.view-students').forEach(function(button) {
+    button.addEventListener('click', function() {
+        const sectionId = this.getAttribute('data-section-id');
 
-    // Close the success message modal when the close button is clicked
-    document.querySelector('#successMessageModal .close-modal').addEventListener('click', function() {
-        document.getElementById('successMessageModal').style.display = 'none';
+        fetch(`./admin1/fetch_students.php?section_id=${sectionId}`)
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Add this line to check the response
+        const studentListContainer = document.getElementById('studentListContainer');
+        studentListContainer.innerHTML = ''; // Clear previous data
+
+        // Check if there are students
+        if (data.length > 0) {
+            // Populate student list
+            data.forEach(student => {
+                const studentItem = document.createElement('p');
+                studentItem.textContent = student.name; // Replace 'name' with the actual field name in your database
+                studentListContainer.appendChild(studentItem);
+            });
+        } else {
+            studentListContainer.innerHTML = '<p>No students found in this section.</p>';
+        }
+
+        // Display the modal
+        document.getElementById('studentListModal').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error fetching students:', error);
+    });
+
+    });
+});
+
+// Close the student list modal
+document.querySelector('#studentListModal .close-modal').addEventListener('click', function() {
+    document.getElementById('studentListModal').style.display = 'none';
+});
+//
+
+// Close the modal when clicking "Close"
+document.querySelectorAll('.close-modal').forEach(function(button) {
+    button.addEventListener('click', function() {
+        this.closest('.modal').style.display = 'none';
+    });
+});
+
+
+    // Generate student name input fields dynamically based on the "Total Students" input
+    document.getElementById('total_students').addEventListener('input', function() {
+        const totalStudents = parseInt(this.value) || 0;
+        const studentInputsDiv = document.getElementById('student_inputs');
+        studentInputsDiv.innerHTML = ''; // Clear any existing inputs
+
+        for (let i = 1; i <= totalStudents; i++) {
+            // Create a label for each student input
+            const label = document.createElement('label');
+            label.textContent = `Student ${i} Name:`;
+
+            // Create an input field for each student name
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.name = `student_names[]`; // Use an array format to capture all student names
+            input.placeholder = `Enter Student ${i} Name`;
+            input.required = true;
+
+            // Append the label and input field to the student inputs div
+            studentInputsDiv.appendChild(label);
+            studentInputsDiv.appendChild(input);
+            studentInputsDiv.appendChild(document.createElement('br'));
+        }
     });
 </script>
 
