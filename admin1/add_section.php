@@ -6,12 +6,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $section_name = $_POST['section_name'];
     $total_students = $_POST['total_students'];
     $student_names = $_POST['student_names'] ?? []; // Retrieve the student names array
+    $course = $_POST['course']; // Retrieve the course value
 
     // Insert the section into the database
-    $sql = "INSERT INTO sections (section_name, total_students) VALUES (:section_name, :total_students)";
+    $sql = "INSERT INTO sections (section_name, total_students, course) VALUES (:section_name, :total_students, :course)";
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':section_name', $section_name);
     $stmt->bindParam(':total_students', $total_students);
+    $stmt->bindParam(':course', $course); // Bind the course parameter
 
     try {
         $pdo->beginTransaction();

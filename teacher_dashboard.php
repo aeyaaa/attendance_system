@@ -207,39 +207,73 @@ $classes = $classStmt->fetchAll();
             }
 
             // Fetch class info when a class is selected
-            document.getElementById("select_class").addEventListener("change", function() {
-                const classId = this.value;
-                
-                if (classId) {
-                    fetch(`./teacher/fetch_class_info.php?class_id=${classId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log("Class Info Response:", data);
-                            if (data.error) {
-                                console.error("Error:", data.error);
-                                alert("Unable to fetch class info. Please try again.");
-                                return;
-                            }
-                            document.getElementById("class-section").innerText = data.section_name || 'N/A';
-                            document.getElementById("class-period-covered").innerText = 
-                                `${data.period_start || 'N/A'} - ${data.period_end || 'N/A'}`;
-                            document.getElementById("class-schedule").innerText = data.schedule || 'N/A';
-                            document.getElementById("class-time").innerText = data.class_time || 'N/A';
-                            document.getElementById("class-room-number").innerText = data.room_number || 'N/A';
-                        })
-                        .catch(error => {
-                            console.error("Error fetching class info:", error);
-                            alert("There was an error fetching the class information.");
-                        });
-                } else {
-                    document.getElementById("class-section").innerText = 'N/A';
-                    document.getElementById("class-period-covered").innerText = 'N/A';
-                    document.getElementById("class-schedule").innerText = 'N/A';
-                    document.getElementById("class-time").innerText = 'N/A';
-                    document.getElementById("class-room-number").innerText = 'N/A';
-                }
-            });
-        </script>
+document.getElementById("select_class").addEventListener("change", function() {
+        const classId = this.value;
+        
+        if (classId) {
+            fetch(`./teacher/fetch_class_info.php?class_id=${classId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Class Info Response:", data);
+                    if (data.error) {
+                        console.error("Error:", data.error);
+                        alert("Unable to fetch class info. Please try again.");
+                        return;
+                    }
+
+                    // Update class info display
+                    document.getElementById("class-section").innerText = data.section_name || 'N/A';
+                    document.getElementById("class-period-covered").innerText = 
+                        `${data.period_start || 'N/A'} - ${data.period_end || 'N/A'}`;
+                    document.getElementById("class-schedule").innerText = data.schedule || 'N/A';
+                    document.getElementById("class-time").innerText = data.class_time || 'N/A';
+                    document.getElementById("class-room-number").innerText = data.room_number || 'N/A';
+
+                    // Update student list
+                    const studentTable = document.querySelector('table');  // Assuming the table is used for displaying student records
+                    const studentRows = data.students.map(student => {
+                        return `<tr>
+                            <td>${student.name}</td>
+                            <td>-</td> <!-- You can add other student-specific data here -->
+                            <td>-</td> <!-- You can add other student-specific data here -->
+                            <td>-</td> <!-- You can add other student-specific data here -->
+                        </tr>`;
+                    }).join('');
+                    studentTable.innerHTML = `
+                        <tr>
+                            <th>Student’s Name</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
+                            <th>Remarks</th>
+                        </tr>
+                        ${studentRows}
+                    `;
+                })
+                .catch(error => {
+                    console.error("Error fetching class info:", error);
+                    alert("There was an error fetching the class information.");
+                });
+        } else {
+            // Reset class info and student table
+            document.getElementById("class-section").innerText = 'N/A';
+            document.getElementById("class-period-covered").innerText = 'N/A';
+            document.getElementById("class-schedule").innerText = 'N/A';
+            document.getElementById("class-time").innerText = 'N/A';
+            document.getElementById("class-room-number").innerText = 'N/A';
+
+            // Clear student table
+            const studentTable = document.querySelector('table');
+            studentTable.innerHTML = `
+                <tr>
+                    <th>Student’s Name</th>
+                    <th>Time In</th>
+                    <th>Time Out</th>
+                    <th>Remarks</th>
+                </tr>
+            `;
+        }
+    });
+</script>
     </div>
 </body>
 </html>

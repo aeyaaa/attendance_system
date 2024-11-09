@@ -121,15 +121,6 @@ $sections = $stmt_sections->fetchAll();
     </table>
 </div>
 
-<!-- Student List Modal -->
-<div id="studentListModal" class="modal">
-    <div class="modal-content">
-        <h4>Student List</h4>
-        <div id="studentListContainer"></div>
-        <button type="button" class="close-modal">Close</button>
-    </div>
-</div>
-
 
     <!-- Add Teacher Modal -->
     <div id="addTeacherModal" class="modal">
@@ -156,6 +147,9 @@ $sections = $stmt_sections->fetchAll();
         <div class="modal-content">
             <h4>Add Section</h4>
             <form action="./admin1/add_section.php" method="POST" id="addSectionForm">
+                <label for="course">Course:</label>
+                <input type="text" id="course" name="course" required><br><br>
+
                 <label for="section_name">Section Name:</label>
                 <input type="text" id="section_name" name="section_name" required><br><br>
 
