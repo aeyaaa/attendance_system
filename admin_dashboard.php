@@ -156,9 +156,11 @@ $sections = $stmt_sections->fetchAll();
                 <label for="total_students">Total Students:</label>
                 <input type="number" id="total_students" name="total_students" required><br><br>
 
-                <div id="student_inputs"></div>
+                <div id="student_inputs">
+                    <!-- Student inputs will be dynamically generated here -->
+                </div>
 
-                <input type="submit" value="Add Section">
+                <input type="submit" value="Save Section">
                 <button type="button" class="close-modal">Close</button>
             </form>
         </div>
@@ -199,31 +201,41 @@ document.querySelectorAll('.view-students').forEach(function(button) {
         const sectionId = this.getAttribute('data-section-id');
 
         fetch(`./admin1/fetch_students.php?section_id=${sectionId}`)
-    .then(response => response.json())
-    .then(data => {
-        console.log(data); // Add this line to check the response
-        const studentListContainer = document.getElementById('studentListContainer');
-        studentListContainer.innerHTML = ''; // Clear previous data
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                const studentListContainer = document.getElementById('studentListContainer');
+                studentListContainer.innerHTML = ''; // Clear previous data
 
-        // Check if there are students
-        if (data.length > 0) {
-            // Populate student list
-            data.forEach(student => {
-                const studentItem = document.createElement('p');
-                studentItem.textContent = student.name; // Replace 'name' with the actual field name in your database
-                studentListContainer.appendChild(studentItem);
+                // Create table for student data
+                if (data.length > 0) {
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>RFID Tag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map(student => `
+                                <tr>
+                                    <td>${student.name}</td>
+                                    <td>${student.student_uid || 'No RFID Tag'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    `;
+                    studentListContainer.appendChild(table);
+                } else {
+                    studentListContainer.innerHTML = '<p>No students found in this section.</p>';
+                }
+
+                document.getElementById('studentListModal').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error fetching students:', error);
             });
-        } else {
-            studentListContainer.innerHTML = '<p>No students found in this section.</p>';
-        }
-
-        // Display the modal
-        document.getElementById('studentListModal').style.display = 'block';
-    })
-    .catch(error => {
-        console.error('Error fetching students:', error);
-    });
-
     });
 });
 
@@ -245,27 +257,154 @@ document.querySelectorAll('.close-modal').forEach(function(button) {
     document.getElementById('total_students').addEventListener('input', function() {
         const totalStudents = parseInt(this.value) || 0;
         const studentInputsDiv = document.getElementById('student_inputs');
-        studentInputsDiv.innerHTML = ''; // Clear any existing inputs
+        studentInputsDiv.innerHTML = '';
 
         for (let i = 1; i <= totalStudents; i++) {
-            // Create a label for each student input
-            const label = document.createElement('label');
-            label.textContent = `Student ${i} Name:`;
+            const container = document.createElement('div');
+            container.className = 'student-container';
 
-            // Create an input field for each student name
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.name = `student_names[]`; // Use an array format to capture all student names
-            input.placeholder = `Enter Student ${i} Name`;
-            input.required = true;
+            // Create the HTML structure
+            container.innerHTML = `
+                <div class="student-row">
+                    <div class="student-info">
+                        <label>Student ${i} Name:</label>
+                        <input type="text" name="student_names[]" required>
+                    </div>
+                    <div class="rfid-info">
+                        <button type="button" class="scan-rfid-btn" onclick="startRFIDScan(${i})">Scan RFID</button>
+                        <span id="scan_status_${i}" class="scan-status"></span>
+                        <input type="hidden" name="rfid_tags[]" id="rfid_tag_${i}">
+                    </div>
+                </div>
+            `;
 
-            // Append the label and input field to the student inputs div
-            studentInputsDiv.appendChild(label);
-            studentInputsDiv.appendChild(input);
-            studentInputsDiv.appendChild(document.createElement('br'));
+            studentInputsDiv.appendChild(container);
         }
     });
+
+    // Function to handle RFID scanning
+    function startRFIDScan(studentNumber) {
+        const statusSpan = document.getElementById(`scan_status_${studentNumber}`);
+        const rfidInput = document.getElementById(`rfid_tag_${studentNumber}`);
+        
+        statusSpan.textContent = 'Scanning... Please tap card';
+        statusSpan.style.color = 'blue';
+        
+        // Start scanning mode
+        fetch('http://192.168.254.133/start_scan')
+            .then(response => response.json())
+            .then(() => {
+                console.log('Scanning started');
+                pollForCard();
+            })
+            .catch(error => {
+                console.error('Error starting scan:', error);
+                statusSpan.textContent = '✗ Error starting scan';
+                statusSpan.style.color = 'red';
+            });
+        
+        function pollForCard() {
+            fetch('http://192.168.254.133/check_card')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Poll response:', data); // Debug log
+                    
+                    if (data.success && data.rfid_tag) {
+                        // Card detected
+                        rfidInput.value = data.rfid_tag;
+                        statusSpan.textContent = '✓ Tag: ' + data.rfid_tag;
+                        statusSpan.style.color = 'green';
+                    } else if (data.status === "scanning") {
+                        // Still scanning, continue polling
+                        setTimeout(pollForCard, 500); // Poll every 500ms
+                    } else {
+                        setTimeout(pollForCard, 500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking card:', error);
+                    statusSpan.textContent = '✗ Error checking card';
+                    statusSpan.style.color = 'red';
+                });
+        }
+    }
 </script>
 
-</body>
-</html>
+<style>
+.student-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.student-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.student-info {
+    flex: 1;
+}
+
+.student-info label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.student-info input {
+    width: 100%;
+    padding: 5px;
+}
+
+.rfid-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.scan-rfid-btn {
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.scan-rfid-btn:hover {
+    background-color: #45a049;
+}
+
+.scan-status {
+    min-width: 200px;
+    display: inline-block;
+    font-size: 14px;
+}
+
+#studentListContainer table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#studentListContainer th,
+#studentListContainer td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#studentListContainer th {
+    background-color: #f4f4f4;
+}
+
+#studentListContainer tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#studentListContainer tr:hover {
+    background-color: #f5f5f5;
+}
+</style>

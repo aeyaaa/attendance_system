@@ -1,34 +1,40 @@
 <?php
-require '../db.php';  // Database connection
+session_start();
+require '../db.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Get form data
-    $section_id = $_POST['section_id'];
-    $period_start = $_POST['period_start'];
-    $period_end = $_POST['period_end'];
-    $schedule = $_POST['schedule'];
-    $room_number = $_POST['room_number'];
+try {
+    // Get the schedule array and convert it to a string
+    $schedule = isset($_POST['schedule']) ? implode(',', $_POST['schedule']) : '';
+    
+    $stmt = $pdo->prepare("
+        INSERT INTO classes (
+            section_id, 
+            period_start, 
+            period_end, 
+            time_start,
+            time_end,
+            schedule, 
+            room_number
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    ");
 
-    // Insert data into the 'classes' table
-    $sql = "INSERT INTO classes (section_id, period_start, period_end, schedule, room_number) 
-            VALUES (:section_id, :period_start, :period_end, :schedule, :room_number)";
+    $stmt->execute([
+        $_POST['section_id'],
+        $_POST['period_start'],
+        $_POST['period_end'],
+        $_POST['time_start'],
+        $_POST['time_end'],
+        $schedule,
+        $_POST['room_number']
+    ]);
 
-    $stmt = $pdo->prepare($sql);
+    $_SESSION['success_message'] = "Class added successfully!";
+    header("Location: ../teacher_dashboard.php");
+    exit();
 
-    // Bind the parameters
-    $stmt->bindParam(':section_id', $section_id);
-    $stmt->bindParam(':period_start', $period_start);
-    $stmt->bindParam(':period_end', $period_end);
-    $stmt->bindParam(':schedule', $schedule);
-    $stmt->bindParam(':room_number', $room_number);
-
-    // Execute the query
-    if ($stmt->execute()) {
-        // Redirect back to teacher_dashboard.php with a success message
-        header("Location: /attendance_system/teacher_dashboard.php?success=Class added successfully!");
-        exit();
-    } else {
-        echo "Error adding class!";
-    }
+} catch (Exception $e) {
+    $_SESSION['error_message'] = "Error: " . $e->getMessage();
+    header("Location: ../teacher_dashboard.php");
+    exit();
 }
 ?>
